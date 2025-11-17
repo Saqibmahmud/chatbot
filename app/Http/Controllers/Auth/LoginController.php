@@ -4,22 +4,28 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Database\Eloquent\Casts\Json;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
-class AuthenticatedSessionController extends Controller
+class LoginController extends Controller
 {
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): Response
-    {
+    public function store(LoginRequest $request):JsonResponse
+            {
         $request->authenticate();
+         $user=$request->user();
+         $token=$user->createToken('mytoken')->plainTextToken;
 
-        $request->session()->regenerate();
-
-        return response()->noContent();
+        return response()->json([
+            'message' => 'User logged in successfully',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
 
     /**
@@ -29,9 +35,7 @@ class AuthenticatedSessionController extends Controller
     {
         Auth::guard('web')->logout();
 
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
+       $request->user()->tokens()->delete();
 
         return response()->noContent();
     }
